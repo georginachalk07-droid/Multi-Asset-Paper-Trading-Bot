@@ -43,8 +43,10 @@ class Broker:
 
         # paper=True forces the paper endpoint; the assertion below is a
         # belt-and-braces guard in case of SDK changes or monkey-patching.
+        # alpaca-py stores the endpoint as a BaseURL enum, so unwrap .value.
         self.client = TradingClient(api_key, secret_key, paper=True)
-        base_url = str(getattr(self.client, "_base_url", ""))
+        raw_url = getattr(self.client, "_base_url", "")
+        base_url = str(getattr(raw_url, "value", raw_url))
         if PAPER_URL_FRAGMENT not in base_url:
             raise PaperGuardError(
                 f"Refusing to run: trading endpoint '{base_url}' is not the "
