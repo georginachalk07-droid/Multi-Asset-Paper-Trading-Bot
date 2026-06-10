@@ -1,0 +1,8 @@
+alpaca-py>=0.33
+pandas>=2.0
+numpy>=1.26
+python-dotenv>=1.0
+APScheduler>=3.10
+PyYAML>=6.0
+matplotlib>=3.8
+pytest>=8.0

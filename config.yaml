@@ -1,0 +1,76 @@
+# =============================================================================
+# Multi-Asset Paper Trading Bot — master configuration
+# All tunable parameters live here. Nothing is hard-coded in the modules.
+# =============================================================================
+
+account:
+  # Starting equity used by the backtester. Live mode reads real equity
+  # from the Alpaca paper account instead.
+  initial_equity: 100000.0
+
+risk:
+  # Hard cap on the loss any single trade can inflict, as % of equity.
+  risk_per_trade_pct: 1.0
+  # Stop distance = this multiple of ATR(atr_period) on the strategy timeframe.
+  stop_atr_multiple: 1.5
+  atr_period: 14
+  # Never hold more than this many positions at once.
+  max_concurrent_positions: 4
+  # Sum of committed risk (entry -> stop) across all open positions, % of equity.
+  max_total_open_risk_pct: 3.0
+  # If equity falls this % below the day's starting equity, close everything
+  # and halt until manually restarted.
+  daily_kill_switch_pct: 3.0
+  # Correlated "risk-on" group: if this many members already hold open longs,
+  # block new long entries in the remaining members.
+  risk_on_group: ["SPY", "QQQ", "BTC/USD"]
+  risk_on_max_longs: 2
+  # Safety valve: a single position's notional value may not exceed this % of
+  # equity (prevents huge low-volatility positions and unfunded crypto buys).
+  max_position_notional_pct: 50.0
+
+costs:
+  # Deliberately pessimistic slippage + fees, applied per side.
+  etf_cost_pct_per_side: 0.05
+  crypto_cost_pct_per_side: 0.25
+
+data:
+  # 'iex' works on the free Alpaca data plan; 'sip' needs a paid subscription.
+  stock_feed: iex
+  cache_dir: data_cache
+
+backtest:
+  # Default 2-year window; override on the command line.
+  start: "2024-06-01"
+  end: "2026-06-01"
+  output_dir: reports/backtests
+
+strategies:
+  mean_reversion:
+    symbols: ["SPY", "QQQ"]
+    timeframe: "15Min"
+    sma_period: 20
+    zscore_entry: 2.0          # enter long below -2.0, short above +2.0
+    allow_short: true          # Alpaca paper accounts can short ETFs
+    regime_atr_period: 14
+    regime_atr_avg_period: 50
+    regime_atr_max_ratio: 1.5  # no entries when ATR > 1.5x its 50-period average
+    # Entries only during the US regular session, flat 10 minutes before close.
+    # Expressed in exchange time (America/New_York) so UK/US daylight-saving
+    # mismatches cannot shift the window.
+    session_open_et: "09:30"
+    session_flat_et: "15:50"
+
+  momentum_breakout:
+    symbols: ["BTC/USD"]
+    timeframe: "1Hour"
+    breakout_lookback: 24      # close above the highest high of the prior 24 bars
+    volume_avg_period: 24      # ...with volume above its 24-bar average
+    trail_atr_multiple: 2.0    # trailing stop 2x ATR below the highest close
+    exit_ema_period: 12        # or close below the 12-period EMA
+
+  trend_following:
+    symbols: ["GLD", "USO"]
+    timeframe: "4Hour"
+    fast_ema: 20
+    slow_ema: 50
